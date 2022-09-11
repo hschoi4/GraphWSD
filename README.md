@@ -47,4 +47,4 @@ python3  ~/GraphWSD/scripts/wsd_ewiser.py \
 ```
 
 
-For any questions contact related to repository contact: `asinha@atilf.fr`
+For any questions related to repository contact: `asinha@atilf.fr`
