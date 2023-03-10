@@ -1,6 +1,6 @@
 # GraphWSD
 
-Offical code repository: **Word Sense Disambiguation of French Lexicographical Examples Using Lexical Networks**
+Official code repository: **Word Sense Disambiguation of French Lexicographical Examples Using Lexical Networks**
 
 ## Folder Description
 
