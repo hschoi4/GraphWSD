@@ -256,7 +256,7 @@ def load_adjacency_mat(senses: set, semantics=False, fragment=False):
 	try:
 		reldf = pd.read_csv('/home/amansinha/wsdmaster/copy/wsd/data/version_31iii21/RL-fr/ls-fr-spiderlex/15-lslf-rel_boost.csv', sep='\t')
 	except:
-		reldf = pd.read_csv('~/wsd-grid/wsd/data/version_31iii21/RL-fr/ls-fr-spiderlex/15-lslf-rel_boost.csv', sep='\t')
+		reldf = pd.read_csv('~/GraphWSD/data/15-lslf-rel_boost.csv', sep='\t')
 
 	ndict = {n:i for i, n in enumerate(senses)} # node dict
 	#print('Number of senses for A construction:', len(senses), len(ndict))

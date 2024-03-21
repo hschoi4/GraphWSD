@@ -1,5 +1,11 @@
 # Instruction to organize the data to run the models
 
+Create  ortolang/ and add dataset folder nountmp/ or verbtmp/. 
+
+Add the lf file ```15-lslf-rel_boost.csv``` in data/ folder.
+Or ask for it using email ```asinha@atilf.fr```
+
+
 ## Preprocessing Pipeline
 
 ```
