@@ -17,6 +17,12 @@ from torch.utils.data import DataLoader
 sys.path.insert(1, '/home/hchoi/GraphWSD/scripts/tools/')
 import belfr_to_semeval, strategy_splitting3
 
+sys.path.append("/home/hchoi/GraphWSD/scripts/CompGCN/")
+from run import Runner
+from mytorch.utils.goodies import FancyDict
+from numpy.linalg import norm
+from numpy import dot
+
 def seed_everything(seed=1234):
     """random seed control"""
     random.seed(seed)
@@ -253,16 +259,153 @@ def load_sense_mat(senses: set):
 
 	return torch.Tensor(semb)
 
+def get_entities(df_nodes):
+    """
+        Get label of each node and new ids
+    """
+    entities = df_nodes['lexname'].tolist()
+    list_labels = []
 
-def load_adjacency_mat(senses: set, semantics=False, fragment=False):
-	try:
-		reldf = pd.read_csv('/home/amansinha/wsdmaster/copy/wsd/data/version_31iii21/RL-fr/ls-fr-spiderlex/15-lslf-rel_boost.csv', sep='\t')
-	except:
-		reldf = pd.read_csv('~/GraphWSD/data/15-lslf-rel_boost.csv', sep='\t')
+    # Get the label and features between tags in xml format
+    for ent in entities:
+        tag = ET.fromstring('<tag>'+ent+"</tag>")
+        acc = ""
+        for field in tag:
+            acc = acc + " " + field.text
+        list_labels.append(acc.strip().lower())
+
+    df_nodes['label'] = list_labels
+    df = df_nodes[['id', 'label']]
+    dic_nodes = dict(zip(df.id, df.label))
+
+    return dic_nodes
+
+def cos(v1, v2):
+    """
+    cosine similarity of two vectors
+    NB: Standard metric to measure similarity between word vectors
+    """
+    return dot(v1, v2) / (norm(v1) * norm(v2))
+
+class NodeVectors:
+
+    def __init__(self, vocab, vectors):
+        self.vocab = vocab
+        self.vectors = vectors
+        self._dim = self.vectors.shape[0]
+        self.zerovec = np.zeros((self._dim), dtype=float)
+
+        self._norm = norm(vectors, axis=1)
+        self.id_to_tok = {i: tok for tok, i in vocab.items()}
+
+    def safely_vectorize(self, toks):
+        return [self.vectors[self.vocab[tok]] for tok in toks if tok in self.vocab]
+
+    def __call__(self, k):
+        # If token exists
+        if k in self.vocab:
+            return self.vectors[self.vocab[k]]
+        elif k.lower() in self.vocab:
+            return self.vectors[self.vocab[k.lower()]]
+        elif k[0].upper() + k[1:].lower() in self.vocab:
+            return self.vectors[self.vocab[k[0].upper() + k[1:].lower()]]
+        else:
+            return self.zerovec
+
+    def __len__(self):
+        return len(self.vocab)
+
+    def most_similar(self, word, k: 10, normalize=True):
+        if isinstance(word, str):
+            wid = self.vocab.get(word, -1)
+            if wid < 0:
+                return None
+            v = self.vectors[wid]
+        elif isinstance(word, np.ndarray) and len(word.shape) == 1:
+            v = word
+        else:
+            raise TypeError(f"Unknown Type of word: {type(word)} ")
+
+        cosines = np.dot(self.vectors, v)
+        if normalize:
+            cosines = cosines / self._norm / norm(v)
+        cosines_ind = np.argsort(-cosines)[:k]
+        return [(self.id_to_tok[tokid], cosines[tokid]) for tokid in cosines_ind]
+
+    def analogy2(self, wa, wb, wc, k=10):
+        if wa in self.vocab and wb in self.vocab and wc in self.vocab:
+
+            diff = self(wa) - self(wb) + self(wc)
+            dists = sorted([(tok, float(norm(diff - self.vectors[i]))) for tok, i in self.vocab.items() if
+                            not tok in [wa, wb, wc]], key=lambda x: x[1])
+
+            return dists[:k]
+        else:
+            return None
+
+    def analogy(self, wa, wb, wc, k=10):
+        if wa in self.vocab and wb in self.vocab and wc in self.vocab:
+
+            diff = self(wb) + self(wc) - self(wa)
+            dists = sorted([(tok, float(norm(diff - self.vectors[i]))) for tok, i in self.vocab.items() if
+                            not tok in [wa, wb, wc]], key=lambda x: x[1])
+
+            return dists[:k]
+        else:
+            return None
+
+
+def load_adjacency_mat(senses: set, semantics=False, fragment=False, cosine=False):
+
+	reldf = pd.read_csv('/home/hchoi/GraphWSD/data/15-lslf-rel_boost.csv', sep='\t')
 
 	ndict = {n:i for i, n in enumerate(senses)} # node dict
 	#print('Number of senses for A construction:', len(senses), len(ndict))
 	adjmat = np.zeros((len(ndict), len(ndict)))
+
+	nodes = pd.read_csv('/home/hchoi/GraphWSD/data/RL-fr/ls-fr-V2.1/01-lsnodes.csv', delimiter='\t')
+	map_dic = get_entities(nodes)
+
+	args = {'name': 'testrun',
+			'dataset': 'rlf/lffam-cp',
+			'model': 'compgcn',
+			'score_func': 'conve',
+			'opn': 'corr',
+			'use_wandb': False,
+			'batch_size': 128,
+			'gamma': 40.0,
+			'gpu': '0',
+			'max_epochs': 500,
+			'l2': 0.0,
+			'lr': 0.001,
+			'lbl_smooth': 0.1,
+			'num_workers': 10,
+			'seed': 41504,
+			'restore': True,
+			'bias': False,
+			'num_bases': -1,
+			'init_dim': 100,
+			'gcn_dim': 200,
+			'embed_dim': None,
+			'gcn_layer': 1,
+			'dropout': 0.1,
+			'hid_drop': 0.3,
+			'hid_drop2': 0.3,
+			'feat_drop': 0.3,
+			'k_w': 10 ,
+			'k_h' : 20 	,
+			'num_filt' : 200,
+			'ker_sz' : 7 	,
+			'log_dir' : '/home/hchoi/GraphWSD/scripts/CompGCN/log/',
+			'config_dir' : '/home/hchoi/GraphWSD/scripts/CompGCN/config/',
+			'trim' : False,
+			'use_fasttext' : False
+			}
+
+	args = FancyDict(args)
+
+	model = Runner(args)
+	model.load_model('/home/hchoi/GraphWSD/scripts/CompGCN/checkpoints/rlf-lffam-cp-2109')
 
 	if not fragment:
 	 	# fragment = False
@@ -273,8 +416,15 @@ def load_adjacency_mat(senses: set, semantics=False, fragment=False):
 				itar = ndict[tar]
 				if semantics:
 					adjmat[isrc][itar] += sem + 1 #(to avoid 0 class strength)
+				elif cosine:
+					nvs = NodeVectors(vocab=model.ent2id, vectors=model.model.init_embed.data.cpu().numpy())
+					adjmat[isrc][itar] = cos(nvs(map_dic[src]), nvs(map_dic[tar]))
+
 				else:
 					adjmat[isrc][itar] += 1
+
+
+
 
 		from scipy import sparse
 
@@ -496,8 +646,8 @@ if __name__== '__main__':
 	#xml_path = home_dir + 'data/BEL-RL-fr/version_12.18.20/xmlPOS/'
 	#save_dir = '/home/amansinha/Downloads/'#xml_path + 'meta/'
 
-	nodes = pd.read_csv(args.home_dir / 'data/RL-fr/ls-fr-V2.1/01-lsnodes.csv', sep='\t')
-	entries = pd.read_csv(args.home_dir / 'data/RL-fr/ls-fr-V2.1/02-lsentries.csv', sep='\t')
+	nodes = pd.read_csv('data/RL-fr/ls-fr-V2.1/01-lsnodes.csv', sep='\t')
+	entries = pd.read_csv('data/RL-fr/ls-fr-V2.1/02-lsentries.csv', sep='\t')
 	
 	try:
 	    os.mkdir(args.save_dir / args.pos)

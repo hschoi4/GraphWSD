@@ -479,6 +479,7 @@ def main(args):
 
     label2nid = dict()
 
+    # Get only senses in the train/dev/test data to create the matrix
     for d in [traindata, devdata, testdata]:
         for sense in d.instances:
             nodeid = sense.instance_src  # .split('/')[-1]
@@ -492,8 +493,6 @@ def main(args):
 
     senses = sorted(senses)
 
-    print(label2nid)
-
     for k, v in label2nid.items():
         if len(v) > 1:
             print(k, v)
@@ -504,7 +503,7 @@ def main(args):
     assert len(set(labels)) == len(set(senses))
 
     # print(len(senses))
-    A = utils.load_adjacency_mat(senses, semantics=args.semantics, fragment=args.fragment)
+    A = utils.load_adjacency_mat(senses, semantics=args.semantics, fragment=args.fragment, cosine=args.cosine)
     print(A)
     #print(A.coalesce().indices().shape)
     #print(A.coalesce().values().shape)
@@ -539,6 +538,7 @@ def main(args):
                     'patience': args.patience,
                     'semantics': args.semantics,
                     'fragment': args.fragment,
+                    'cosine': args.cosine,
                     }
 
     clf = Enet(model_params, A)
@@ -563,7 +563,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', default=2,
                         help='Number of Epochs')
     parser.add_argument('--data_dir', required=False, type=pathlib.Path,
-                        help='location to dataset files', default='/home/hchoi/GraphWSD/data/ortolang/nountmp/')
+                        help='location to dataset files', default='/home/hchoi/GraphWSD/data/ortolang/noun/')
     parser.add_argument('--device', default=torch.device('cpu'),
                         help='gpu or cpu')
     parser.add_argument('--batch_size', default=32,
@@ -593,6 +593,8 @@ if __name__ == '__main__':
     parser.add_argument('--lm', default='camembert-base', help='name of huggingface lm')
     parser.add_argument('--semantics', action='store_true',
                         help='To load semantics A')
+    parser.add_argument('--cosine', action='store_true',
+                        help='To load A with cosine similarity')
     parser.add_argument('--trainable', action='store_true', help='to train adjancency')
     parser.add_argument('--fragment', action='store_true')
     args = parser.parse_args()
