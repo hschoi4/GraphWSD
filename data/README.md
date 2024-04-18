@@ -10,8 +10,16 @@ Or ask for it using email ```asinha@atilf.fr```
 
 ```
 python scripts/utils.py --name ortolang --version 1 		
-						--save_dir ~/Downloads/ortolang/ 
+						--save_dir ./data/preprocessed_data/ 
 						--home ~/GraphWSD/ 
 						--xml ~/GraphWSD/data/version_31iii21/BEL-RL-fr/V2-ORTOLANG/XML-POS/ --write --keep  
 						--pos noun
 ```
+
+Files needed :
+
+Used version 31iii21
+
+- ```V2-ORTOLANG/XML-POS/``` folder
+- ```RL-fr/``` folder
+
