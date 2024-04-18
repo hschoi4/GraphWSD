@@ -89,12 +89,12 @@ def strategy_split(args):
 
 	#nountrain = pd.read_csv(f'/home/amansinha/Downloads/data/train_{args.pos}s.gold.key.txt', sep='\t', names=['instance_id', 'label'])
 	#nountest = pd.read_csv(f'/home/amansinha/Downloads/data/test_{args.pos}s.gold.key.txt', sep='\t', names=['instance_id', 'label'])
-	#noun = pd.concat([nountrain, nountest])
+	#nouns = pd.concat([nountrain, nountest])
 
 	noun = pd.read_csv(args.save_dir / f'{args.pos}s{args.version}.gold.key.txt', sep='\t', names=['instance_id', 'label'])
 
 
-	#if name == 'noun':
+	#if name == 'nouns':
 	n = len(noun)
 
 	noundict = dict(zip(noun['instance_id'], noun['label']))

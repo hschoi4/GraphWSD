@@ -100,7 +100,6 @@ def convert_format(p, version,xml_path, save_dir, nodes, entries, senses):
 
   for i,r in enumerate(tqdm(root.iter('{http://www.tei-c.org/ns/1.0}cit'))):
     cid = r.attrib['{http://www.w3.org/XML/1998/namespace}id']
-    #print(cid)
     #if cid != citid:
     #  continue
 
@@ -287,9 +286,9 @@ if __name__ == '__main__':
   #save_dir = '/home/amansinha/Downloads/'#
   #sense_dir = xml_path + 'meta/'
   
-  nodes = pd.read_csv(args.home_dir / 'data/version_31iii21/RL-fr/ls-fr-spiderlex/01-lsnodes.csv', sep='\t')
-  entries = pd.read_csv(args.home_dir / 'data/version_31iii21/RL-fr/ls-fr-spiderlex/02-lsentries.csv', sep='\t')
-  senses = pd.read_csv(args.sense_dir / 'nodeid_senselabel_31iii21.dat', sep='\t')
+  nodes = pd.read_csv(args.home_dir / 'data/RL-fr/ls-fr-V2.1/01-lsnodes.csv', sep='\t')
+  entries = pd.read_csv(args.home_dir / 'data/RL-fr/ls-fr-V2.1/02-lsentries.csv', sep='\t')
+  senses = pd.read_csv(args.home_dir / 'ortolang/nouns/nodeid_senselabel_ortolang.dat', sep='\t')
 
 
 

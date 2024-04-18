@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import os, pathlib, random
-
+import sys
 from lxml import etree
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
@@ -12,8 +12,10 @@ from collections import defaultdict
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from tools import belfr_to_semeval, strategy_splitting3
+#from tools import belfr_to_semeval, strategy_splitting3
 
+sys.path.insert(1, '/home/hchoi/GraphWSD/scripts/tools/')
+import belfr_to_semeval, strategy_splitting3
 
 def seed_everything(seed=1234):
     """random seed control"""
@@ -278,7 +280,7 @@ def load_adjacency_mat(senses: set, semantics=False, fragment=False):
 
 		adjs = sparse.csr_matrix(adjmat, shape=(len(senses),len(senses)))
 		Acoo = adjs.tocoo()
-		adj_sparse = torch.sparse.LongTensor(torch.LongTensor([Acoo.row.tolist(), Acoo.col.tolist()]),
+		adj_sparse = torch.sparse_coo_tensor(torch.LongTensor([Acoo.row.tolist(), Acoo.col.tolist()]),
 									  torch.FloatTensor(Acoo.data.astype(np.float64)), (len(senses),len(senses)))
 
 	else:
@@ -324,7 +326,6 @@ def load_adjacency_mat(senses: set, semantics=False, fragment=False):
 
 
 		adj_sparse = [torch.sparse_coo_tensor(torch.LongTensor(indices[i]),torch.FloatTensor(values[i]), (len(ndict),len(ndict)),requires_grad=False) for i in range(len(indices))]
-
 	return adj_sparse
 
 
@@ -495,8 +496,8 @@ if __name__== '__main__':
 	#xml_path = home_dir + 'data/BEL-RL-fr/version_12.18.20/xmlPOS/'
 	#save_dir = '/home/amansinha/Downloads/'#xml_path + 'meta/'
 
-	nodes = pd.read_csv(args.home_dir / 'data/version_31iii21/RL-fr/ls-fr-spiderlex/01-lsnodes.csv', sep='\t')
-	entries = pd.read_csv(args.home_dir / 'data/version_31iii21/RL-fr/ls-fr-spiderlex/02-lsentries.csv', sep='\t')
+	nodes = pd.read_csv(args.home_dir / 'data/RL-fr/ls-fr-V2.1/01-lsnodes.csv', sep='\t')
+	entries = pd.read_csv(args.home_dir / 'data/RL-fr/ls-fr-V2.1/02-lsentries.csv', sep='\t')
 	
 	try:
 	    os.mkdir(args.save_dir / args.pos)
@@ -513,7 +514,7 @@ if __name__== '__main__':
 	senses = pd.read_csv(args.save_dir/f'nodeid_senselabel_{args.name}.dat', sep='\t')
 	
 	#command 2
-	# convert bel-rl to conll format verb and noun
+	# convert bel-rl to conll format verb and nouns
 	# refer belrl-to-semeval file
 	belfr_to_semeval.convert_format(args.pos, args.version, args.xml_path, args.save_dir, nodes, entries, senses)
 	print('step2 done....')
