@@ -406,6 +406,9 @@ def load_adjacency_mat(senses: set, semantics=False, fragment=False, cosine=Fals
 
 	model = Runner(args)
 	model.load_model('/home/hchoi/GraphWSD/scripts/CompGCN/checkpoints/rlf-lffam-cp-2109')
+	no_emb = 0
+	nvs = NodeVectors(vocab=model.ent2id, vectors=model.model.init_embed.data.cpu().numpy())
+	print(nvs(map_dic['ls:fr:node:55767']))
 
 	if not fragment:
 	 	# fragment = False
@@ -418,7 +421,13 @@ def load_adjacency_mat(senses: set, semantics=False, fragment=False, cosine=Fals
 					adjmat[isrc][itar] += sem + 1 #(to avoid 0 class strength)
 				elif cosine:
 					nvs = NodeVectors(vocab=model.ent2id, vectors=model.model.init_embed.data.cpu().numpy())
-					adjmat[isrc][itar] = cos(nvs(map_dic[src]), nvs(map_dic[tar]))
+					emb_src = nvs(map_dic[src])
+					emb_tar = nvs(map_dic[tar])
+					if emb_src.shape == emb_tar.shape:
+						adjmat[isrc][itar] = cos(emb_src, emb_tar)
+					else:
+						adjmat[isrc][itar] = 0
+						no_emb += 1
 
 				else:
 					adjmat[isrc][itar] += 1

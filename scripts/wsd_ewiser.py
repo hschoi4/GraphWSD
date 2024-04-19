@@ -505,6 +505,7 @@ def main(args):
     # print(len(senses))
     A = utils.load_adjacency_mat(senses, semantics=args.semantics, fragment=args.fragment, cosine=args.cosine)
     print(A)
+    exit(0)
     #print(A.coalesce().indices().shape)
     #print(A.coalesce().values().shape)
 
@@ -554,6 +555,7 @@ def main(args):
     print('*' * 40, '----Testing-----', '*' * 40)
     clf.predict(testdata, name='test')
     # print(clf.baseline)
+
 
 
 if __name__ == '__main__':
